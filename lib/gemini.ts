@@ -67,6 +67,9 @@ export async function askGemini(
       config: {
         temperature: 1.0,
         maxOutputTokens: 1024,
+        thinkingConfig: {
+          thinkingBudget: 512,
+        },
       },
     }),
     GEMINI_TIMEOUT_MS
