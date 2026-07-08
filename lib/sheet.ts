@@ -86,8 +86,17 @@ export async function getFaq(): Promise<FaqRow[]> {
     if (!res.ok) {
       throw new Error(`Sheet fetch failed with status ${res.status}`);
     }
+    if (res.url.includes("accounts.google.com")) {
+      throw new Error("Sheet fetch was redirected to a Google sign-in page (not publicly accessible)");
+    }
     const csv = await res.text();
+    if (csv.includes("<html") || csv.includes("docs-additional-bars")) {
+      throw new Error("Sheet fetch returned an HTML page instead of CSV data");
+    }
     const rows = rowsToFaq(parseCsv(csv));
+    if (rows.length === 0) {
+      throw new Error("Sheet CSV parsed to zero FAQ rows");
+    }
     console.log("[sheet] fetched FAQ rows:", rows.length, "raw CSV length:", csv.length);
     cache = { rows, fetchedAt: now };
     return rows;
