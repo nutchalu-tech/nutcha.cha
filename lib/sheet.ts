@@ -88,6 +88,7 @@ export async function getFaq(): Promise<FaqRow[]> {
     }
     const csv = await res.text();
     const rows = rowsToFaq(parseCsv(csv));
+    console.log("[sheet] fetched FAQ rows:", rows.length, "raw CSV length:", csv.length);
     cache = { rows, fetchedAt: now };
     return rows;
   } catch (err) {
