@@ -6,6 +6,10 @@ const MODEL = "gemini-3.5-flash";
 
 function buildPrompt(faq: FaqRow[], question: string): string {
   const faqCsv = faqToCsvString(faq);
+  console.log(
+    "[gemini] faq questions:",
+    faq.map((r) => r.question)
+  );
 
   return `<role>
 คุณคือแอดมินร้าน ${SHOP_NAME} ร้านขายเสื้อผ้าผู้หญิง ให้บริการลูกค้าทาง LINE
