@@ -76,6 +76,9 @@ export async function askGemini(
     finishReason,
     thoughtsTokenCount: usage?.thoughtsTokenCount,
     candidatesTokenCount: usage?.candidatesTokenCount,
+    promptTokenCount: usage?.promptTokenCount,
+    faqRowCount: faq.length,
+    rawText: response.text?.slice(0, 200),
   });
 
   if (finishReason === "MAX_TOKENS") {
