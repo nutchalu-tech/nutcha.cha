@@ -66,7 +66,7 @@ export async function askGemini(
       contents: prompt,
       config: {
         temperature: 1.0,
-        maxOutputTokens: 1024,
+        maxOutputTokens: 2048,
         thinkingConfig: {
           thinkingBudget: 512,
         },
