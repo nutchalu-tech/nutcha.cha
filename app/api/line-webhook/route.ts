@@ -6,6 +6,7 @@ import { buildReplyMessage, getLineClient } from "@/lib/line";
 import { getFaq } from "@/lib/sheet";
 
 export const runtime = "nodejs";
+export const maxDuration = 30;
 
 async function handleTextEvent(event: WebhookEvent) {
   if (event.type !== "message" || event.message.type !== "text") {
