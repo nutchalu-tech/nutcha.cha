@@ -24,10 +24,9 @@ export async function getDisplayName(
   }
 }
 
-export async function notifyAdmin(
+async function pushToAdmin(
   client: messagingApi.MessagingApiClient,
-  displayName: string,
-  question: string
+  text: string
 ): Promise<void> {
   const adminUserId = process.env.ADMIN_LINE_USER_ID?.trim();
   if (!adminUserId) {
@@ -43,16 +42,32 @@ export async function notifyAdmin(
   try {
     await client.pushMessage({
       to: adminUserId,
-      messages: [
-        {
-          type: "text",
-          text: `บอทตอบไม่ได้ ⚠️\nลูกค้า: ${displayName}\nคำถาม: ${question}`,
-        },
-      ],
+      messages: [{ type: "text", text }],
     });
   } catch (err) {
     console.error("[line] failed to notify admin:", err);
   }
+}
+
+export async function notifyAdminBotCouldNotAnswer(
+  client: messagingApi.MessagingApiClient,
+  displayName: string,
+  question: string
+): Promise<void> {
+  await pushToAdmin(
+    client,
+    `บอทตอบไม่ได้ ⚠️\nลูกค้า: ${displayName}\nคำถาม: ${question}`
+  );
+}
+
+export async function notifyAdminCustomerRequestedStaff(
+  client: messagingApi.MessagingApiClient,
+  displayName: string
+): Promise<void> {
+  await pushToAdmin(
+    client,
+    `ลูกค้าขอคุยกับแอดมินโดยเฉพาะ 🙋\nลูกค้า: ${displayName}`
+  );
 }
 
 export function buildReplyMessage(text: string): messagingApi.TextMessage {
