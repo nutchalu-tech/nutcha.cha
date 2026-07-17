@@ -1,7 +1,7 @@
 export default function Home() {
   return (
     <main>
-      <h1>nutcha.cha LINE Bot</h1>
+      <h1>Crowdster LINE Bot</h1>
       <p>Webhook endpoint: /api/line-webhook</p>
     </main>
   );
