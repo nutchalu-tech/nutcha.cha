@@ -1,7 +1,7 @@
 import { validateSignature, WebhookEvent } from "@line/bot-sdk";
 import { NextRequest, NextResponse } from "next/server";
+import { askClaude } from "@/lib/claude";
 import { DEFAULT_REPLY } from "@/lib/constants";
-import { askGemini } from "@/lib/gemini";
 import { buildReplyMessage, getLineClient } from "@/lib/line";
 import { getFaq } from "@/lib/sheet";
 
@@ -18,7 +18,7 @@ async function handleTextEvent(event: WebhookEvent) {
   let replyText = DEFAULT_REPLY;
   try {
     const faq = await getFaq();
-    replyText = await askGemini(faq, userMessage);
+    replyText = await askClaude(faq, userMessage);
   } catch (err) {
     console.error("[line-webhook] failed to build reply:", err);
     replyText = DEFAULT_REPLY;

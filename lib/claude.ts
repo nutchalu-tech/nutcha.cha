@@ -1,13 +1,11 @@
-import { GoogleGenAI } from "@google/genai";
-import { DEFAULT_REPLY, GEMINI_TIMEOUT_MS, SHOP_NAME } from "./constants";
+import Anthropic from "@anthropic-ai/sdk";
+import { CLAUDE_MAX_TOKENS, CLAUDE_MODEL, CLAUDE_TIMEOUT_MS, DEFAULT_REPLY, SHOP_NAME } from "./constants";
 import { FaqRow, faqToCsvString } from "./sheet";
 
-const MODEL = "gemini-3.5-flash";
-
-function buildPrompt(faq: FaqRow[], question: string): string {
+function buildSystemPrompt(faq: FaqRow[]): string {
   const faqCsv = faqToCsvString(faq);
   console.log(
-    "[gemini] faq questions:",
+    "[claude] faq questions:",
     faq.map((r) => r.question)
   );
 
@@ -29,17 +27,13 @@ function buildPrompt(faq: FaqRow[], question: string): string {
 
 <faq>
 ${faqCsv}
-</faq>
-
-<question>
-${question}
-</question>`;
+</faq>`;
 }
 
 async function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   let timer: NodeJS.Timeout;
   const timeout = new Promise<never>((_, reject) => {
-    timer = setTimeout(() => reject(new Error("Gemini call timed out")), ms);
+    timer = setTimeout(() => reject(new Error("Claude call timed out")), ms);
   });
   try {
     return await Promise.race([promise, timeout]);
@@ -48,51 +42,41 @@ async function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   }
 }
 
-export async function askGemini(
+export async function askClaude(
   faq: FaqRow[],
   question: string
 ): Promise<string> {
-  const apiKey = process.env.GEMINI_API_KEY;
+  const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
-    throw new Error("GEMINI_API_KEY is not set");
+    throw new Error("ANTHROPIC_API_KEY is not set");
   }
 
-  const ai = new GoogleGenAI({ apiKey });
-  const prompt = buildPrompt(faq, question);
+  const client = new Anthropic({ apiKey });
 
   const response = await withTimeout(
-    ai.models.generateContent({
-      model: MODEL,
-      contents: prompt,
-      config: {
-        temperature: 1.0,
-        maxOutputTokens: 2048,
-        thinkingConfig: {
-          thinkingBudget: 512,
-        },
-      },
+    client.messages.create({
+      model: CLAUDE_MODEL,
+      max_tokens: CLAUDE_MAX_TOKENS,
+      system: buildSystemPrompt(faq),
+      messages: [{ role: "user", content: question }],
     }),
-    GEMINI_TIMEOUT_MS
+    CLAUDE_TIMEOUT_MS
   );
 
-  const candidate = response.candidates?.[0];
-  const finishReason = candidate?.finishReason;
-  const usage = response.usageMetadata;
-
-  console.log("[gemini]", {
-    finishReason,
-    thoughtsTokenCount: usage?.thoughtsTokenCount,
-    candidatesTokenCount: usage?.candidatesTokenCount,
-    promptTokenCount: usage?.promptTokenCount,
+  console.log("[claude]", {
+    stopReason: response.stop_reason,
+    inputTokens: response.usage.input_tokens,
+    outputTokens: response.usage.output_tokens,
     faqRowCount: faq.length,
-    rawText: response.text?.slice(0, 200),
   });
 
-  if (finishReason === "MAX_TOKENS") {
+  if (response.stop_reason === "max_tokens") {
     return DEFAULT_REPLY;
   }
 
-  const text = response.text?.trim();
+  const textBlock = response.content.find((b) => b.type === "text");
+  const text = textBlock && "text" in textBlock ? textBlock.text.trim() : "";
+
   if (!text) {
     return DEFAULT_REPLY;
   }
