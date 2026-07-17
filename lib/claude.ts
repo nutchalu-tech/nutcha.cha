@@ -12,16 +12,20 @@ function faqToText(rows: FaqRow[]): string {
   return rows.map((r) => `${r.question} | ${r.answer}`).join("\n");
 }
 
-function buildSystemPrompt(displayName: string): string {
+// Static across every call (same brand, same FAQ) -- this is the block we
+// want Claude to cache instead of re-processing at full price on every
+// message. Must not contain anything that varies per customer (name, time,
+// etc.) or the cache would miss every time anyway.
+function buildStaticSystemPrompt(): string {
   return `<role>
-คุณคือแอดมินของ ${BRAND_NAME} (Thailand Consumer Panel) พูดคุยกับสมาชิก panel ทาง LINE ชื่อของสมาชิกที่กำลังคุยด้วยคือ "${displayName}"
+คุณคือแอดมินของ ${BRAND_NAME} (Thailand Consumer Panel) พูดคุยกับสมาชิก panel ทาง LINE
 </role>
 
 <constraints>
 - ตอบโดยใช้ข้อมูลใน <faq> เท่านั้น ห้ามแต่งวันเวลา ลิงก์ เงื่อนไข หรือข้อมูลใดๆ ที่ไม่มีใน <faq>
 - หากคำถามของสมาชิกไม่ตรงกับข้อมูลใน <faq> หรือไม่มั่นใจ ให้ตอบด้วยข้อความ default นี้เท่านั้น ห้ามเติมคำทักทายหรือข้อความอื่นนำหน้า/ต่อท้าย: "${DEFAULT_REPLY}"
 - โทนภาษา: เป็นกันเอง สุภาพแบบคุยกับสมาชิก panel ทั่วไป ลงท้ายด้วย "ครับ" ใช้อีโมจิได้ตามความเหมาะสม
-- ขึ้นต้นคำตอบด้วยการทักชื่อสมาชิก เช่น "สวัสดีครับ คุณ ${displayName}" เมื่อเหมาะสม (ยกเว้นตอนตอบข้อความ default ห้ามทักชื่อนำหน้า)
+- ขึ้นต้นคำตอบด้วยการทักชื่อสมาชิกตามชื่อที่ระบุไว้ในข้อความถัดไป เมื่อเหมาะสม (ยกเว้นตอนตอบข้อความ default ห้ามทักชื่อนำหน้า)
 - ความยาวคำตอบกระชับ ตรงประเด็น ไม่ต้องยาวเกินความจำเป็น
 - ห้ามสร้างบทสนทนาสมมติ ห้ามพูดแทนสมาชิก
 </constraints>
@@ -62,7 +66,17 @@ export async function askClaude(
     client.messages.create({
       model: CLAUDE_MODEL,
       max_tokens: CLAUDE_MAX_TOKENS,
-      system: buildSystemPrompt(displayName),
+      system: [
+        {
+          type: "text",
+          text: buildStaticSystemPrompt(),
+          cache_control: { type: "ephemeral" },
+        },
+        {
+          type: "text",
+          text: `ชื่อของสมาชิกที่กำลังคุยด้วยตอนนี้คือ "${displayName}"`,
+        },
+      ],
       messages: [{ role: "user", content: question }],
     }),
     CLAUDE_TIMEOUT_MS
@@ -72,6 +86,8 @@ export async function askClaude(
     stopReason: response.stop_reason,
     inputTokens: response.usage.input_tokens,
     outputTokens: response.usage.output_tokens,
+    cacheReadTokens: response.usage.cache_read_input_tokens,
+    cacheWriteTokens: response.usage.cache_creation_input_tokens,
   });
 
   if (response.stop_reason === "max_tokens") {
