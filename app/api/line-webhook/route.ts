@@ -2,7 +2,7 @@ import { validateSignature, WebhookEvent } from "@line/bot-sdk";
 import { NextRequest, NextResponse } from "next/server";
 import { askClaude } from "@/lib/claude";
 import { DEFAULT_REPLY } from "@/lib/constants";
-import { buildReplyMessage, getDisplayName, getLineClient } from "@/lib/line";
+import { buildReplyMessage, getDisplayName, getLineClient, notifyAdmin } from "@/lib/line";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
@@ -16,9 +16,10 @@ async function handleTextEvent(event: WebhookEvent) {
   const userId = event.source.userId;
 
   let replyText = DEFAULT_REPLY;
+  let displayName = "สมาชิก";
   try {
     const client = getLineClient();
-    const displayName = userId ? await getDisplayName(client, userId) : "สมาชิก";
+    displayName = userId ? await getDisplayName(client, userId) : "สมาชิก";
     replyText = await askClaude(displayName, userMessage);
   } catch (err) {
     console.error("[line-webhook] failed to build reply:", err);
@@ -33,6 +34,11 @@ async function handleTextEvent(event: WebhookEvent) {
     });
   } catch (err) {
     console.error("[line-webhook] failed to send reply to LINE:", err);
+  }
+
+  if (replyText === DEFAULT_REPLY) {
+    const client = getLineClient();
+    await notifyAdmin(client, displayName, userMessage);
   }
 }
 

@@ -24,6 +24,30 @@ export async function getDisplayName(
   }
 }
 
+export async function notifyAdmin(
+  client: messagingApi.MessagingApiClient,
+  displayName: string,
+  question: string
+): Promise<void> {
+  const adminUserId = process.env.ADMIN_LINE_USER_ID;
+  if (!adminUserId) {
+    return;
+  }
+  try {
+    await client.pushMessage({
+      to: adminUserId,
+      messages: [
+        {
+          type: "text",
+          text: `บอทตอบไม่ได้ ⚠️\nลูกค้า: ${displayName}\nคำถาม: ${question}`,
+        },
+      ],
+    });
+  } catch (err) {
+    console.error("[line] failed to notify admin:", err);
+  }
+}
+
 export function buildReplyMessage(text: string): messagingApi.TextMessage {
   return {
     type: "text",
