@@ -10,6 +10,7 @@ import {
   notifyAdminBotCouldNotAnswer,
   notifyAdminCustomerRequestedStaff,
 } from "@/lib/line";
+import { logConversation } from "@/lib/log";
 import { checkRateLimit, RATE_LIMIT_REPLY } from "@/lib/rateLimit";
 
 export const runtime = "nodejs";
@@ -65,6 +66,13 @@ async function handleTextEvent(event: WebhookEvent) {
       console.error("[line-webhook] failed to send reply to LINE:", err);
     }
     await notifyAdminCustomerRequestedStaff(client, displayName);
+    await logConversation({
+      displayName,
+      userId: userId ?? "",
+      question: userMessage,
+      answer: ackText,
+      answered: false,
+    });
     return;
   }
 
@@ -85,9 +93,18 @@ async function handleTextEvent(event: WebhookEvent) {
     console.error("[line-webhook] failed to send reply to LINE:", err);
   }
 
-  if (replyText.includes(DEFAULT_REPLY)) {
+  const answered = !replyText.includes(DEFAULT_REPLY);
+  if (!answered) {
     await notifyAdminBotCouldNotAnswer(client, displayName, userMessage);
   }
+
+  await logConversation({
+    displayName,
+    userId: userId ?? "",
+    question: userMessage,
+    answer: replyText,
+    answered,
+  });
 }
 
 export async function POST(req: NextRequest) {
