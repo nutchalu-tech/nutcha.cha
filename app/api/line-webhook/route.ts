@@ -15,6 +15,8 @@ async function handleTextEvent(event: WebhookEvent) {
   const userMessage = event.message.text;
   const userId = event.source.userId;
 
+  console.log("[line-webhook] incoming from userId:", userId);
+
   let replyText = DEFAULT_REPLY;
   let displayName = "สมาชิก";
   try {
