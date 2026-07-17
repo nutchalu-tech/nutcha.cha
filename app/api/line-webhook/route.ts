@@ -36,7 +36,7 @@ async function handleTextEvent(event: WebhookEvent) {
     console.error("[line-webhook] failed to send reply to LINE:", err);
   }
 
-  if (replyText === DEFAULT_REPLY) {
+  if (replyText.includes(DEFAULT_REPLY)) {
     const client = getLineClient();
     await notifyAdmin(client, displayName, userMessage);
   }
