@@ -84,6 +84,15 @@ async function handleTextEvent(event: WebhookEvent) {
     replyText = DEFAULT_REPLY;
   }
 
+  // Claude sometimes tacks on extra text around the default reply despite
+  // being told not to (a greeting prefix, a "let me know if..." suffix).
+  // Force it back to the exact configured message whenever that happens,
+  // so customers always see a clean default and the notification/log below
+  // work off consistent text.
+  if (replyText !== DEFAULT_REPLY && replyText.includes(DEFAULT_REPLY)) {
+    replyText = DEFAULT_REPLY;
+  }
+
   try {
     await client.replyMessage({
       replyToken,
