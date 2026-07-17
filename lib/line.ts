@@ -29,8 +29,15 @@ export async function notifyAdmin(
   displayName: string,
   question: string
 ): Promise<void> {
-  const adminUserId = process.env.ADMIN_LINE_USER_ID;
+  const adminUserId = process.env.ADMIN_LINE_USER_ID?.trim();
   if (!adminUserId) {
+    return;
+  }
+  if (!/^U[0-9a-f]{32}$/i.test(adminUserId)) {
+    console.error(
+      "[line] ADMIN_LINE_USER_ID does not look like a valid LINE userId:",
+      adminUserId
+    );
     return;
   }
   try {
