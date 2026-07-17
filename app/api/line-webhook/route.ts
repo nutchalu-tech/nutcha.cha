@@ -1,5 +1,6 @@
 import { validateSignature, WebhookEvent } from "@line/bot-sdk";
 import { NextRequest, NextResponse } from "next/server";
+import { isWithinBusinessHours, OUTSIDE_BUSINESS_HOURS_REPLY } from "@/lib/businessHours";
 import { askClaude } from "@/lib/claude";
 import { CONTACT_STAFF_ACK_REPLY, CONTACT_STAFF_MESSAGE, DEFAULT_REPLY } from "@/lib/constants";
 import {
@@ -9,6 +10,7 @@ import {
   notifyAdminBotCouldNotAnswer,
   notifyAdminCustomerRequestedStaff,
 } from "@/lib/line";
+import { checkRateLimit, RATE_LIMIT_REPLY } from "@/lib/rateLimit";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
@@ -24,16 +26,40 @@ async function handleTextEvent(event: WebhookEvent) {
   console.log("[line-webhook] incoming from userId:", userId);
 
   const client = getLineClient();
+
+  if (userId) {
+    const rateLimitResult = checkRateLimit(userId);
+    if (rateLimitResult === "silent") {
+      // Already warned recently and still spamming — drop without a reply
+      // to avoid burning more Claude/LINE calls on a runaway loop.
+      return;
+    }
+    if (rateLimitResult === "warn") {
+      try {
+        await client.replyMessage({
+          replyToken,
+          messages: [buildReplyMessage(RATE_LIMIT_REPLY)],
+        });
+      } catch (err) {
+        console.error("[line-webhook] failed to send reply to LINE:", err);
+      }
+      return;
+    }
+  }
+
   const displayName = userId ? await getDisplayName(client, userId) : "สมาชิก";
 
   // Customer pressed the "contact staff" quick reply — skip Claude entirely
   // so this always reaches the admin, instead of depending on the model
   // recognizing the message as unanswerable.
   if (userMessage.trim() === CONTACT_STAFF_MESSAGE) {
+    const ackText = isWithinBusinessHours()
+      ? CONTACT_STAFF_ACK_REPLY
+      : OUTSIDE_BUSINESS_HOURS_REPLY;
     try {
       await client.replyMessage({
         replyToken,
-        messages: [buildReplyMessage(CONTACT_STAFF_ACK_REPLY)],
+        messages: [buildReplyMessage(ackText)],
       });
     } catch (err) {
       console.error("[line-webhook] failed to send reply to LINE:", err);
