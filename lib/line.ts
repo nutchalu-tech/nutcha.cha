@@ -11,6 +11,19 @@ export function getLineClient() {
   return new MessagingApiClient({ channelAccessToken });
 }
 
+export async function getDisplayName(
+  client: messagingApi.MessagingApiClient,
+  userId: string
+): Promise<string> {
+  try {
+    const profile = await client.getProfile(userId);
+    return profile.displayName || "สมาชิก";
+  } catch (err) {
+    console.error("[line] failed to fetch profile:", err);
+    return "สมาชิก";
+  }
+}
+
 export function buildReplyMessage(text: string): messagingApi.TextMessage {
   return {
     type: "text",

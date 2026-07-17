@@ -1,24 +1,29 @@
 import Anthropic from "@anthropic-ai/sdk";
-import { CLAUDE_MAX_TOKENS, CLAUDE_MODEL, CLAUDE_TIMEOUT_MS, DEFAULT_REPLY, SHOP_NAME } from "./constants";
-import { FaqRow, faqToCsvString } from "./sheet";
+import {
+  BRAND_NAME,
+  CLAUDE_MAX_TOKENS,
+  CLAUDE_MODEL,
+  CLAUDE_TIMEOUT_MS,
+  DEFAULT_REPLY,
+} from "./constants";
+import { FAQ, FaqRow } from "./faq";
 
-function buildSystemPrompt(faq: FaqRow[]): string {
-  const faqCsv = faqToCsvString(faq);
-  console.log(
-    "[claude] faq questions:",
-    faq.map((r) => r.question)
-  );
+function faqToText(rows: FaqRow[]): string {
+  return rows.map((r) => `${r.question} | ${r.answer}`).join("\n");
+}
 
+function buildSystemPrompt(displayName: string): string {
   return `<role>
-คุณคือแอดมินร้าน ${SHOP_NAME} ร้านขายเสื้อผ้าผู้หญิง ให้บริการลูกค้าทาง LINE
+คุณคือแอดมินของ ${BRAND_NAME} (Thailand Consumer Panel) พูดคุยกับสมาชิก panel ทาง LINE ชื่อของสมาชิกที่กำลังคุยด้วยคือ "${displayName}"
 </role>
 
 <constraints>
-- ตอบโดยใช้ข้อมูลใน <faq> เท่านั้น ห้ามแต่งราคา ไซส์ เวลาจัดส่ง หรือข้อมูลใดๆ ที่ไม่มีใน <faq>
-- หากคำถามของลูกค้าไม่ตรงกับข้อมูลใน <faq> หรือไม่มั่นใจ ให้ตอบด้วยข้อความ default: "${DEFAULT_REPLY}"
-- โทนภาษา: สุภาพ ทางการ ดูมีความเป็นมืออาชีพ ลงท้ายด้วย "ค่ะ" ใช้อีโมจิได้แต่พอประมาณ (ไม่เกิน 1-2 ตัวต่อข้อความ)
-- ความยาวคำตอบ 1-3 ประโยค กระชับ ตรงประเด็น
-- ห้ามสร้างบทสนทนาสมมติ ห้ามพูดแทนลูกค้า
+- ตอบโดยใช้ข้อมูลใน <faq> เท่านั้น ห้ามแต่งวันเวลา ลิงก์ เงื่อนไข หรือข้อมูลใดๆ ที่ไม่มีใน <faq>
+- หากคำถามของสมาชิกไม่ตรงกับข้อมูลใน <faq> หรือไม่มั่นใจ ให้ตอบด้วยข้อความ default: "${DEFAULT_REPLY}"
+- โทนภาษา: เป็นกันเอง สุภาพแบบคุยกับสมาชิก panel ทั่วไป ลงท้ายด้วย "ครับ" ใช้อีโมจิได้ตามความเหมาะสม
+- ขึ้นต้นคำตอบด้วยการทักชื่อสมาชิก เช่น "สวัสดีครับ คุณ ${displayName}" เมื่อเหมาะสม
+- ความยาวคำตอบกระชับ ตรงประเด็น ไม่ต้องยาวเกินความจำเป็น
+- ห้ามสร้างบทสนทนาสมมติ ห้ามพูดแทนสมาชิก
 </constraints>
 
 <output_format>
@@ -26,7 +31,7 @@ function buildSystemPrompt(faq: FaqRow[]): string {
 </output_format>
 
 <faq>
-${faqCsv}
+${faqToText(FAQ)}
 </faq>`;
 }
 
@@ -43,7 +48,7 @@ async function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
 }
 
 export async function askClaude(
-  faq: FaqRow[],
+  displayName: string,
   question: string
 ): Promise<string> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
@@ -57,7 +62,7 @@ export async function askClaude(
     client.messages.create({
       model: CLAUDE_MODEL,
       max_tokens: CLAUDE_MAX_TOKENS,
-      system: buildSystemPrompt(faq),
+      system: buildSystemPrompt(displayName),
       messages: [{ role: "user", content: question }],
     }),
     CLAUDE_TIMEOUT_MS
@@ -67,7 +72,6 @@ export async function askClaude(
     stopReason: response.stop_reason,
     inputTokens: response.usage.input_tokens,
     outputTokens: response.usage.output_tokens,
-    faqRowCount: faq.length,
   });
 
   if (response.stop_reason === "max_tokens") {

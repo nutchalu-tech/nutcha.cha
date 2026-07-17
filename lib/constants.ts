@@ -1,12 +1,11 @@
-export const SHOP_NAME = "nutcha.cha";
+export const BRAND_NAME = "Crowdster";
 
 export const DEFAULT_REPLY =
-  "ขออภัยค่ะ เรื่องนี้แอดมินขอตรวจสอบและติดต่อกลับนะคะ";
+  "ขออภัยครับ เรื่องนี้แอดมินขอตรวจสอบและติดต่อกลับนะครับ 🙏";
 
 export const CONTACT_STAFF_LABEL = "ติดต่อเจ้าหน้าที่";
-export const CONTACT_STAFF_MESSAGE = "ขอสอบถามเจ้าหน้าที่ค่ะ";
+export const CONTACT_STAFF_MESSAGE = "ขอสอบถามเจ้าหน้าที่ครับ";
 
-export const SHEET_CACHE_TTL_MS = 60 * 1000;
 export const CLAUDE_TIMEOUT_MS = 20000;
 export const CLAUDE_MODEL = "claude-haiku-4-5";
 export const CLAUDE_MAX_TOKENS = 1024;
