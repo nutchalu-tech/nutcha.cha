@@ -7,6 +7,7 @@ import {
   DEFAULT_REPLY,
 } from "./constants";
 import { FAQ, FaqRow } from "./faq";
+import { ChatTurn } from "./memory";
 
 function faqToText(rows: FaqRow[]): string {
   return rows.map((r) => `${r.question} | ${r.answer}`).join("\n");
@@ -54,7 +55,8 @@ async function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
 
 export async function askClaude(
   displayName: string,
-  question: string
+  question: string,
+  history: ChatTurn[] = []
 ): Promise<string> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
@@ -78,7 +80,10 @@ export async function askClaude(
           text: `ชื่อของสมาชิกที่กำลังคุยด้วยตอนนี้คือ "${displayName}"`,
         },
       ],
-      messages: [{ role: "user", content: question }],
+      messages: [
+        ...history.map((turn) => ({ role: turn.role, content: turn.content })),
+        { role: "user" as const, content: question },
+      ],
     }),
     CLAUDE_TIMEOUT_MS
   );

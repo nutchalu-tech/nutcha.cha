@@ -2,7 +2,7 @@ import { validateSignature, WebhookEvent } from "@line/bot-sdk";
 import { NextRequest, NextResponse } from "next/server";
 import { isWithinBusinessHours, OUTSIDE_BUSINESS_HOURS_REPLY } from "@/lib/businessHours";
 import { askClaude } from "@/lib/claude";
-import { CONTACT_STAFF_ACK_REPLY, CONTACT_STAFF_MESSAGE, DEFAULT_REPLY } from "@/lib/constants";
+import { buildContactStaffAckReply, CONTACT_STAFF_MESSAGE, DEFAULT_REPLY } from "@/lib/constants";
 import {
   buildReplyMessage,
   getDisplayName,
@@ -11,6 +11,8 @@ import {
   notifyAdminCustomerRequestedStaff,
 } from "@/lib/line";
 import { logConversation } from "@/lib/log";
+import { appendHistory, getHistory } from "@/lib/memory";
+import { joinQueue } from "@/lib/queue";
 import { checkRateLimit, RATE_LIMIT_REPLY } from "@/lib/rateLimit";
 
 export const runtime = "nodejs";
@@ -29,7 +31,7 @@ async function handleTextEvent(event: WebhookEvent) {
   const client = getLineClient();
 
   if (userId) {
-    const rateLimitResult = checkRateLimit(userId);
+    const rateLimitResult = await checkRateLimit(userId);
     if (rateLimitResult === "silent") {
       // Already warned recently and still spamming — drop without a reply
       // to avoid burning more Claude/LINE calls on a runaway loop.
@@ -54,9 +56,16 @@ async function handleTextEvent(event: WebhookEvent) {
   // so this always reaches the admin, instead of depending on the model
   // recognizing the message as unanswerable.
   if (userMessage.trim() === CONTACT_STAFF_MESSAGE) {
-    const ackText = isWithinBusinessHours()
-      ? CONTACT_STAFF_ACK_REPLY
-      : OUTSIDE_BUSINESS_HOURS_REPLY;
+    let ackText = OUTSIDE_BUSINESS_HOURS_REPLY;
+    if (isWithinBusinessHours()) {
+      try {
+        const { position, estimatedWaitMinutes } = await joinQueue(userId ?? displayName);
+        ackText = buildContactStaffAckReply(position, estimatedWaitMinutes);
+      } catch (err) {
+        console.error("[line-webhook] failed to join queue:", err);
+        ackText = buildContactStaffAckReply(1, 1);
+      }
+    }
     try {
       await client.replyMessage({
         replyToken,
@@ -78,7 +87,8 @@ async function handleTextEvent(event: WebhookEvent) {
 
   let replyText = DEFAULT_REPLY;
   try {
-    replyText = await askClaude(displayName, userMessage);
+    const history = userId ? await getHistory(userId) : [];
+    replyText = await askClaude(displayName, userMessage, history);
   } catch (err) {
     console.error("[line-webhook] failed to build reply:", err);
     replyText = DEFAULT_REPLY;
@@ -105,6 +115,11 @@ async function handleTextEvent(event: WebhookEvent) {
   const answered = !replyText.includes(DEFAULT_REPLY);
   if (!answered) {
     await notifyAdminBotCouldNotAnswer(client, displayName, userMessage);
+  }
+
+  if (userId) {
+    await appendHistory(userId, { role: "user", content: userMessage });
+    await appendHistory(userId, { role: "assistant", content: replyText });
   }
 
   await logConversation({
