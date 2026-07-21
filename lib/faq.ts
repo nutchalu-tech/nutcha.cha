@@ -14,7 +14,7 @@ export const FAQ: FaqRow[] = [
   {
     question: "แบบสอบถามประจำสัปดาห์",
     answer:
-      "Crowdster จะมีแบบสอบถามประจำสัปดาห์ทุกวันอังคาร เวลา 18:00 น. นอกเหนือจากนี้สามารถติดตามประชาสัมพันธ์หรือกิจกรรมอื่น ๆ ได้จากทาง Facebook: Crowdster และ Line Open Chat: Crowdster Community",
+      "Crowdster จะมีแบบสอบถามประจำสัปดาห์ทุกวันอังคาร เวลา 18:00 น. นอกเหนือจากนี้สามารถติดตามประชาสัมพันธ์หรือกิจกรรมอื่น ๆ ได้จากทาง Facebook: https://www.facebook.com/Crowdstercommunity/ และ Line Open Chat: https://line.me/ti/g2/VN9QSV8dZ3gU-n2BiJU0RkyGF1M0capVLdwP0Q?utm_source=invitation&utm_medium=link_copy&utm_campaign=default",
   },
   {
     question: "เปลี่ยนชื่อ",
