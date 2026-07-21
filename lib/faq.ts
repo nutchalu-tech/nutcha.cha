@@ -68,7 +68,8 @@ export const FAQ: FaqRow[] = [
   },
   {
     question: "ไม่เห็นมีแบบสอบถามส่งมาเลย",
-    answer: "แบบสอบถามจะส่งไปตามความเหมาะสมของแต่ละคนนะครับ รอนิดนึงน้า",
+    answer:
+      "แบบสอบถามจะส่งไปตามความเหมาะสมของแต่ละคนนะครับ รอนิดนึงน้า ระหว่างนี้สามารถติดตามข่าวสารและประชาสัมพันธ์เพิ่มเติมได้ที่ Facebook: https://www.facebook.com/Crowdstercommunity/ และ Line Open Chat: https://line.me/ti/g2/VN9QSV8dZ3gU-n2BiJU0RkyGF1M0capVLdwP0Q?utm_source=invitation&utm_medium=link_copy&utm_campaign=default ครับ",
   },
   {
     question: "สมัครสมาชิกที่ไหน",
