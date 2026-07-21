@@ -8,6 +8,7 @@ import {
 } from "./constants";
 import { FAQ, FaqRow } from "./faq";
 import { ChatTurn } from "./memory";
+import { SurveyRow, surveysToText } from "./surveys";
 
 function faqToText(rows: FaqRow[]): string {
   return rows.map((r) => `${r.question} | ${r.answer}`).join("\n");
@@ -31,6 +32,7 @@ function buildStaticSystemPrompt(): string {
 - ความยาวคำตอบกระชับ ตรงประเด็น ไม่ต้องยาวเกินความจำเป็น
 - ห้ามสร้างบทสนทนาสมมติ ห้ามพูดแทนสมาชิก
 - เมื่อพูดถึง Facebook หรือ Line Open Chat ในคำตอบ ต้องแนบลิงก์ URL เต็มที่มีอยู่ใน <faq> เสมอ ห้ามพูดลอยๆ ว่า "ติดตามได้ทาง Facebook หรือ Line Open Chat" โดยไม่มีลิงก์ต่อท้าย
+- ถ้าสมาชิกถามเกี่ยวกับแบบสอบถามที่เพิ่งให้คะแนนไปหรือสถานะแบบสอบถามชื่อใดชื่อหนึ่ง ให้ค้นหาชื่อที่ตรงหรือใกล้เคียงที่สุดใน <recent_surveys> แล้วตอบวันที่ สถานะ และคะแนนตามข้อมูลนั้น ถ้าหาไม่เจอในรายการให้บอกตามตรงว่ายังไม่มีข้อมูลแบบสอบถามนี้ในระบบ ห้ามเดาหรือแต่งข้อมูลขึ้นเอง
 </constraints>
 
 <output_format>
@@ -57,7 +59,8 @@ async function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
 export async function askClaude(
   displayName: string,
   question: string,
-  history: ChatTurn[] = []
+  history: ChatTurn[] = [],
+  recentSurveys: SurveyRow[] = []
 ): Promise<string> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
@@ -79,6 +82,10 @@ export async function askClaude(
         {
           type: "text",
           text: `ชื่อของสมาชิกที่กำลังคุยด้วยตอนนี้คือ "${displayName}"`,
+        },
+        {
+          type: "text",
+          text: `<recent_surveys>\n${surveysToText(recentSurveys)}\n</recent_surveys>`,
         },
       ],
       messages: [
