@@ -1,3 +1,5 @@
+import { getRedis } from "./redis";
+
 const WINDOW_MS = 10_000;
 const MAX_MESSAGES_PER_WINDOW = 5;
 const COOLDOWN_MS = 30_000;
@@ -5,34 +7,33 @@ const COOLDOWN_MS = 30_000;
 export const RATE_LIMIT_REPLY =
   "ขอโทษครับ ตอนนี้มีข้อความเข้ามาถี่เกินไป รบกวนรอสักครู่แล้วลองใหม่นะครับ 🙏";
 
-type RateState = {
-  timestamps: number[];
-  warnedUntil: number;
-};
-
-// Best-effort, in-memory only -- resets whenever the serverless instance
-// cold-starts. Good enough to stop a runaway loop from one user hammering
-// the bot within a single warm instance; not a hard guarantee across scale.
-const state = new Map<string, RateState>();
-
 export type RateLimitResult = "ok" | "warn" | "silent";
 
-export function checkRateLimit(userId: string): RateLimitResult {
+// Redis-backed sliding window + cooldown flag, shared across all serverless
+// instances so it actually holds up under concurrent invocations.
+export async function checkRateLimit(userId: string): Promise<RateLimitResult> {
+  const redis = getRedis();
   const now = Date.now();
-  const entry = state.get(userId) ?? { timestamps: [], warnedUntil: 0 };
+  const windowKey = `ratelimit:window:${userId}`;
+  const cooldownKey = `ratelimit:cooldown:${userId}`;
 
-  entry.timestamps = entry.timestamps.filter((t) => now - t < WINDOW_MS);
-  entry.timestamps.push(now);
-  state.set(userId, entry);
-
-  if (entry.timestamps.length <= MAX_MESSAGES_PER_WINDOW) {
-    return "ok";
-  }
-
-  if (now < entry.warnedUntil) {
+  const cooldownActive = await redis.get(cooldownKey);
+  if (cooldownActive) {
     return "silent";
   }
 
-  entry.warnedUntil = now + COOLDOWN_MS;
-  return "warn";
+  const pipeline = redis.pipeline();
+  pipeline.zremrangebyscore(windowKey, 0, now - WINDOW_MS);
+  pipeline.zadd(windowKey, now, `${now}-${Math.random()}`);
+  pipeline.zcard(windowKey);
+  pipeline.pexpire(windowKey, WINDOW_MS);
+  const results = await pipeline.exec();
+  const count = (results?.[2]?.[1] as number) ?? 0;
+
+  if (count > MAX_MESSAGES_PER_WINDOW) {
+    await redis.set(cooldownKey, "1", "PX", COOLDOWN_MS);
+    return "warn";
+  }
+
+  return "ok";
 }
