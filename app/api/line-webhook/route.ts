@@ -14,6 +14,7 @@ import { logConversation } from "@/lib/log";
 import { appendHistory, getHistory } from "@/lib/memory";
 import { joinQueue } from "@/lib/queue";
 import { checkRateLimit, RATE_LIMIT_REPLY } from "@/lib/rateLimit";
+import { getRecentSurveys } from "@/lib/surveys";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
@@ -88,7 +89,8 @@ async function handleTextEvent(event: WebhookEvent) {
   let replyText = DEFAULT_REPLY;
   try {
     const history = userId ? await getHistory(userId) : [];
-    replyText = await askClaude(displayName, userMessage, history);
+    const recentSurveys = await getRecentSurveys();
+    replyText = await askClaude(displayName, userMessage, history, recentSurveys);
   } catch (err) {
     console.error("[line-webhook] failed to build reply:", err);
     replyText = DEFAULT_REPLY;
