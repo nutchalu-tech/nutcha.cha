@@ -14,7 +14,7 @@ export const FAQ: FaqRow[] = [
   {
     question: "แบบสอบถามประจำสัปดาห์",
     answer:
-      "Crowdster จะมีแบบสอบถามประจำสัปดาห์ทุกวันอังคาร เวลา 18:00 น. นอกเหนือจากนี้สามารถติดตามประชาสัมพันธ์หรือกิจกรรมอื่น ๆ ได้จากทาง Facebook: https://www.facebook.com/Crowdstercommunity/ และ Line Open Chat: https://line.me/ti/g2/VN9QSV8dZ3gU-n2BiJU0RkyGF1M0capVLdwP0Q?utm_source=invitation&utm_medium=link_copy&utm_campaign=default",
+      "Crowdster จะมีแบบสอบถามประจำสัปดาห์ทุกวันอังคาร เวลา 18:00 น. โดยระบบจะส่งลิงก์แบบสอบถามมาให้ 2 ทางคือ ทางแชท LINE นี้โดยตรง (Line group/Open Chat) และขึ้นในเว็บ https://panelist.crowdster.me/home ด้วยครับ นอกเหนือจากนี้สามารถติดตามประชาสัมพันธ์หรือกิจกรรมอื่น ๆ ได้จากทาง Facebook: https://www.facebook.com/Crowdstercommunity/ และ Line Open Chat: https://line.me/ti/g2/VN9QSV8dZ3gU-n2BiJU0RkyGF1M0capVLdwP0Q?utm_source=invitation&utm_medium=link_copy&utm_campaign=default",
   },
   {
     question: "เปลี่ยนชื่อ",
@@ -69,7 +69,7 @@ export const FAQ: FaqRow[] = [
   {
     question: "ไม่เห็นมีแบบสอบถามส่งมาเลย",
     answer:
-      "แบบสอบถามจะส่งไปตามความเหมาะสมของแต่ละคนนะครับ รอนิดนึงน้า ระหว่างนี้สามารถติดตามข่าวสารและประชาสัมพันธ์เพิ่มเติมได้ที่ Facebook: https://www.facebook.com/Crowdstercommunity/ และ Line Open Chat: https://line.me/ti/g2/VN9QSV8dZ3gU-n2BiJU0RkyGF1M0capVLdwP0Q?utm_source=invitation&utm_medium=link_copy&utm_campaign=default ครับ",
+      "แบบสอบถามจะส่งไปตามความเหมาะสมของแต่ละคนนะครับ รอนิดนึงน้า โดยระบบจะส่งลิงก์แบบสอบถามมาให้ 2 ทางคือ ทางแชท LINE นี้โดยตรง (Line group/Open Chat) และขึ้นในเว็บ https://panelist.crowdster.me/home เมื่อถึงคิวครับ ระหว่างนี้สามารถติดตามข่าวสารและประชาสัมพันธ์เพิ่มเติมได้ที่ Facebook: https://www.facebook.com/Crowdstercommunity/ และ Line Open Chat: https://line.me/ti/g2/VN9QSV8dZ3gU-n2BiJU0RkyGF1M0capVLdwP0Q?utm_source=invitation&utm_medium=link_copy&utm_campaign=default ครับ",
   },
   {
     question: "สมัครสมาชิกที่ไหน",
@@ -115,5 +115,10 @@ export const FAQ: FaqRow[] = [
       "Crowdster คืออะไร / น่าเชื่อถือไหม / โกงไหม / เป็นแชร์ลูกโซ่ไหม / ปลอดภัยไหม",
     answer:
       "Crowdster เป็น Thailand Consumer Panel แหล่งข้อมูลผู้บริโภคไทยเพื่อการตัดสินใจที่แม่นยำครับ วิธีการทำงานคือ สมัครสมาชิกฟรี แล้วจะได้รับแบบสอบถามเข้ามาเป็นระยะ ให้ร่วมแสดงความคิดเห็นในหัวข้อต่าง ๆ เช่น พฤติกรรมผู้บริโภค สินค้า บริการ ทำแบบสอบถามเสร็จจะได้รับค่าตอบแทนเป็นเงินหรือแต้มสะสมแลกของรางวัลครับ ไม่มีการเก็บเงินหรือให้ลงทุนใด ๆ จากสมาชิกเลย เป็นการตอบแทนที่ให้กับสมาชิกจากการทำแบบสอบถามเท่านั้นครับ สามารถศึกษาข้อมูลเพิ่มเติมและติดตามความเคลื่อนไหวได้ที่ Facebook: https://www.facebook.com/Crowdstercommunity/ ครับ",
+  },
+  {
+    question: "แบบสอบถาม maintain / แบบสอบถาม maintain ส่งไปที่ไหน",
+    answer:
+      "แบบสอบถาม maintain คือแบบสอบถามที่ระบบส่งให้สมาชิกเป็นระยะเพื่อเก็บข้อมูลเพิ่มเติมสำหรับคัดเลือกแบบสอบถามในอนาคตครับ จะส่งให้ 2 ทางคือ ทางแชท LINE นี้โดยตรง (Line group/Open Chat) และขึ้นในเว็บ https://panelist.crowdster.me/home ครับ",
   },
 ];
